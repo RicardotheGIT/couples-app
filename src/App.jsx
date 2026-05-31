@@ -931,39 +931,61 @@ function StoryMode() {
   );
 }
 
-const TABS = [
-  { id: "spin", label: "Spin", component: SpinWheel },
-  { id: "mood", label: "Mood", component: MoodMatcher },
-  { id: "date", label: "Date", component: DateNight },
-  { id: "wild", label: "Wild", component: WildCard },
-  { id: "kink", label: "Kink", component: KinkQuiz },
-  { id: "position", label: "Positions", component: PositionGuide },
-  { id: "body", label: "Body Map", component: BodyMap },
-  { id: "hot", label: "Hot/Not", component: HotOrNot },
-  { id: "sensation", label: "Sensation", component: SensationMenu },
-  { id: "poison", label: "Poison", component: PickYourPoison },
-  { id: "dice", label: "Dice", component: DiceMode },
-  { id: "story", label: "Story", component: StoryMode },
+const MODULES = [
+  { id:"spin",      label:"Spin the Wheel",   icon:"&#9733;",  sub:"Random dare",           component:SpinWheel },
+  { id:"mood",      label:"Mood Matcher",      icon:"&#10084;", sub:"Align desires",         component:MoodMatcher },
+  { id:"date",      label:"Date Night",        icon:"&#127863;",sub:"Plan the evening",      component:DateNight },
+  { id:"wild",      label:"Wild Card",         icon:"&#10024;", sub:"One tap, no thinking",  component:WildCard },
+  { id:"kink",      label:"Kink Quiz",         icon:"&#128274;",sub:"Discover overlap",      component:KinkQuiz },
+  { id:"positions", label:"Position Guide",    icon:"&#9836;",  sub:"20 positions",          component:PositionGuide },
+  { id:"bodymap",   label:"Body Map",          icon:"&#128100;",sub:"Show where",            component:BodyMap },
+  { id:"hotornot",  label:"Hot or Not",        icon:"&#128293;",sub:"Rate together",         component:HotOrNot },
+  { id:"sensation", label:"Sensation Menu",    icon:"&#127774;",sub:"Build a sequence",      component:SensationMenu },
+  { id:"poison",    label:"Pick Your Poison",  icon:"&#9879;",  sub:"Two options, choose",   component:PickYourPoison },
+  { id:"dice",      label:"Dice Mode",         icon:"&#9856;",  sub:"Roll for a dare",       component:DiceMode },
+  { id:"story",     label:"Story Mode",        icon:"&#128214;",sub:"A night retold",        component:StoryMode },
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState("spin");
-  const ActiveComponent = TABS.find(t => t.id === activeTab)?.component;
+  const [screen, setScreen] = useState("home");
+  const active = MODULES.find(m => m.id === screen);
+
+  if (screen !== "home" && active) {
+    const Component = active.component;
+    return (
+      <div style={s.app}>
+        <header style={s.header}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <button onClick={() => setScreen("home")} style={{background:"none",border:"none",color:C.muted,fontSize:20,cursor:"pointer",padding:"0 4px",lineHeight:1}}>&#8592;</button>
+            <div style={{flex:1,textAlign:"center"}}>
+              <p style={{...s.title,fontSize:16}}>{active.label}</p>
+            </div>
+            <div style={{width:28}}/>
+          </div>
+        </header>
+        <div style={s.content}>
+          <Component />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={s.app}>
       <header style={s.header}>
-        <p style={s.title}>Intimacy</p>
+        <p style={s.title}>Apres Minuit</p>
         <p style={s.sub}>For Two</p>
       </header>
-      <nav style={{ display: "flex", overflowX: "auto", borderBottom: "1px solid #3d1f2e", background: "#0f0609", padding: "0 8px", gap: 2 }}>
-        {TABS.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ background: "none", border: "none", borderBottom: "2px solid " + (activeTab === t.id ? C.gold : "transparent"), color: activeTab === t.id ? C.gold : C.muted, padding: "10px 12px", fontSize: 11, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", fontFamily: "Georgia,serif", whiteSpace: "nowrap", flexShrink: 0 }}>
-            {t.label}
-          </button>
-        ))}
-      </nav>
       <div style={s.content}>
-        {ActiveComponent && <ActiveComponent />}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:4}}>
+          {MODULES.map(m => (
+            <div key={m.id} onClick={() => setScreen(m.id)} style={{background:C.card,border:"1px solid "+C.border,borderRadius:4,padding:"20px 14px",cursor:"pointer",textAlign:"center"}}>
+              <div style={{fontSize:28,marginBottom:8,color:C.gold}} dangerouslySetInnerHTML={{__html:m.icon}}/>
+              <p style={{fontSize:12,letterSpacing:1,color:C.text,margin:"0 0 4px",textTransform:"uppercase"}}>{m.label}</p>
+              <p style={{fontSize:10,letterSpacing:1,color:C.muted,margin:0}}>{m.sub}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
