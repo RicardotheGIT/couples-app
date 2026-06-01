@@ -140,6 +140,64 @@ const HOT_OR_NOT_IDEAS={"Blindfolds":"One partner blindfolded completely. The ot
 
 const SENSATION_ITEMS=["Deep kissing","Neck kissing","Ear kissing","Shoulder massage","Back massage","Inner thigh touch","Scalp massage","Chest touch","Stomach kissing","Hip touching","Light scratching","Hair pulling","Biting (light)","Biting (firm)","Spanking","Oral -- giving","Oral -- receiving","Fingertip tracing","Breath on skin","Ice on skin","Warm mouth after ice","Feather touch","Firm grip","Full body weight","Restraint (wrists)","Restraint (legs)","Blindfold","Vibration","Simultaneous touch"];
 
+const SENSATION_PHRASES={
+  "Scalp massage":"fingers moving slowly through your hair, pressing into your scalp until everything else goes quiet",
+  "Shoulder massage":"hands on your shoulders — firm and unhurried, working out whatever the day left behind",
+  "Back massage":"palms following the full length of your back, all the way down, not rushing toward anything",
+  "Deep kissing":"mouth finding yours — the kind of kissing that has nowhere else to be",
+  "Neck kissing":"lips at your neck, warm breath before anything else, then mouth, then the edge of teeth",
+  "Ear kissing":"breath close at your ear — felt before it's heard",
+  "Chest touch":"hands moving across your chest, slow and open-palmed, taking their time",
+  "Stomach kissing":"mouth tracing down your stomach, pausing where you least expect it",
+  "Hip touching":"hands settling on your hips with full intent — not touching, gripping",
+  "Inner thigh touch":"fingers tracing slowly inward along your thigh, stopping just before where you want them",
+  "Light scratching":"fingernails dragging lightly down your back — just enough to feel, just enough to want more",
+  "Firm grip":"hands gripping with intention — wherever you respond most",
+  "Hair pulling":"fingers winding into your hair and pulling back slowly — deliberate, not urgent",
+  "Biting (light)":"teeth grazing your shoulder, your neck, leaving warmth behind",
+  "Biting (firm)":"teeth pressing in — enough to make you catch your breath, not enough to stop",
+  "Spanking":"a firm hand exactly where you want it, sharp and then gone, then again",
+  "Oral -- giving":"mouth moving lower, taking as long as it takes, giving everything that was promised",
+  "Oral -- receiving":"receiving exactly what was promised — nothing rushed, nothing held back",
+  "Fingertip tracing":"fingertips tracing patterns across you — arms, ribs, the backs of your knees",
+  "Breath on skin":"warm breath moving across your skin before anything touches — the anticipation is the point",
+  "Ice on skin":"the shock of ice tracing your collarbone, your spine — every nerve suddenly present",
+  "Warm mouth after ice":"cold followed immediately by warm mouth, the contrast sending everything sideways",
+  "Feather touch":"the lightest possible contact — barely there and completely impossible to ignore",
+  "Restraint (wrists)":"wrists held above your head — not by force, by agreement, which is the more powerful version",
+  "Restraint (legs)":"legs held in place while everything else continues and you cannot change a thing",
+  "Blindfold":"sight taken away, everything that remains sharpened past the point of thinking clearly",
+  "Vibration":"vibration exactly where you want it, sustained past the point of composure",
+  "Simultaneous touch":"both of us giving and receiving at once — nothing sequential, all of it at the same time",
+  "Full body weight":"full weight settling over you, grounding everything, nowhere to go and no reason to want to",
+};
+
+function buildSensationStory(seq){
+  if(!seq.length)return"";
+  const phrase=item=>SENSATION_PHRASES[item]||item.toLowerCase();
+  const cut1=Math.ceil(seq.length*0.33);
+  const cut2=cut1+Math.ceil(seq.length*0.40);
+  const early=seq.slice(0,cut1);
+  const mid=seq.slice(cut1,cut2);
+  const late=seq.slice(cut2);
+  const parts=[];
+  if(early.length===1){
+    parts.push("Tonight starts with "+phrase(early[0])+". Nothing else yet. Just that.");
+  } else {
+    const last=early[early.length-1];
+    parts.push("Tonight starts with "+early.slice(0,-1).map(phrase).join(", then ")+" — and then "+phrase(last)+". Nothing else yet.");
+  }
+  if(mid.length>0){
+    parts.push("Once you're there: "+mid.map(phrase).join(". Then ")+". Each one building on the last.");
+  }
+  if(late.length>0){
+    parts.push("By the end — "+late.map(phrase).join(". ")+". All of it yours.");
+  } else if(parts.length){
+    parts[parts.length-1]=parts[parts.length-1].replace(/\.$/,"")+". All of it yours.";
+  }
+  return parts.join("\n\n");
+}
+
 const SENSATION_ESCALATION=[
   ["Scalp massage","Shoulder massage","Back massage"],
   ["Deep kissing","Neck kissing","Ear kissing"],
@@ -730,39 +788,37 @@ function HotOrNot(){
 // SENSATION MENU
 function SensationMenu(){
   const[selected,setSelected]=useState([]);
-  const[sequence,setSequence]=useState([]);
+  const[story,setStory]=useState("");
   const[generated,setGenerated]=useState(false);
   const[copied,setCopied]=useState(false);
   const toggle=(i)=>setSelected(p=>p.includes(i)?p.filter(x=>x!==i):[...p,i]);
-  const generate=()=>{setSequence(buildSensationSequence(selected));setGenerated(true);};
-  const reset=()=>{setSelected([]);setSequence([]);setGenerated(false);setCopied(false);};
-  const copyMenu=()=>{
-    const lines=[
-      "Tonight's Sensation Menu",
-      "─────────────────────",
-      ...sequence.map((item,i)=>`${i+1}. ${item}`),
-      "",
-      "— via Apres Minuit",
-    ];
-    navigator.clipboard.writeText(lines.join("\n")).then(()=>{
+  const generate=()=>{
+    const seq=buildSensationSequence(selected);
+    setStory(buildSensationStory(seq));
+    setGenerated(true);
+  };
+  const reset=()=>{setSelected([]);setStory("");setGenerated(false);setCopied(false);};
+  const copyStory=()=>{
+    const text="A note for tonight\n\n"+story+"\n\n— Apres Minuit";
+    navigator.clipboard.writeText(text).then(()=>{
       setCopied(true);setTimeout(()=>setCopied(false),2500);
     });
   };
   if(generated)return(
     <div>
-      <p style={s.label}>Tonight's Menu</p>
-      <p style={{color:C.muted,fontSize:12,marginBottom:16,letterSpacing:1}}>These build in order — work through them at your own pace</p>
-      {sequence.map((item,i)=>(
-        <div key={item} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #3d1f2e"}}>
-          <span style={{color:C.gold,fontSize:11,minWidth:20,letterSpacing:1}}>{i+1}</span>
-          <span style={{fontSize:14,color:C.text}}>{item}</span>
-        </div>
-      ))}
-      <button style={{...s.btnG,marginTop:20}} onClick={copyMenu}>
-        {copied?"Copied ✓":"Copy to Share"}
+      <p style={s.label}>A Note for Tonight</p>
+      <div style={s.box}>
+        <div style={s.orn}>✦ ✦ ✦</div>
+        {story.split("\n\n").map((para,i)=>(
+          <p key={i} style={{margin:"0 0 16px",color:C.text,lineHeight:1.9,fontSize:14}}>{para}</p>
+        ))}
+        <div style={s.orn}>✦ ✦ ✦</div>
+      </div>
+      <button style={{...s.btnG,marginTop:16}} onClick={copyStory}>
+        {copied?"Copied ✓":"Copy to Send"}
       </button>
       <p style={{color:C.muted,fontSize:11,textAlign:"center",marginTop:8,letterSpacing:1,lineHeight:1.6}}>
-        Paste into a text or email to send to your partner
+        Paste into a text or email to set the mood
       </p>
       <button style={{...s.btnO,marginTop:12}} onClick={reset}>Start Over</button>
     </div>
@@ -772,13 +828,13 @@ function SensationMenu(){
       <div style={{background:C.card,border:"1px solid #3d1f2e",borderRadius:4,padding:20,marginBottom:16}}>
         <p style={{...s.label,marginBottom:4}}>What are you in the mood for?</p>
         <p style={{color:C.muted,fontSize:12,margin:"0 0 16px",letterSpacing:1}}>
-          Select everything that appeals tonight. Your partner will receive a curated sequence to follow.
+          Select what you want tonight. We'll turn it into a story your partner can read before you begin.
         </p>
         <div>{SENSATION_ITEMS.map(i=><span key={i} style={s.chip(selected.includes(i))} onClick={()=>toggle(i)}>{i}</span>)}</div>
       </div>
       <p style={{color:C.muted,fontSize:11,textAlign:"center",marginBottom:12,letterSpacing:1}}>{selected.length} selected</p>
       <button style={{...s.btnG,opacity:!selected.length?0.4:1}} onClick={generate} disabled={!selected.length}>
-        Generate My Menu
+        Write the Note
       </button>
     </div>
   );
@@ -1001,7 +1057,7 @@ const MODULES = [
   { id:"positions", label:"Position Guide",    icon:"&#9836;",  sub:"20 positions",          component:PositionGuide },
   { id:"bodymap",   label:"Body Map",          icon:"&#128100;",sub:"Show where",            component:BodyMap },
   { id:"hotornot",  label:"Hot or Not",        icon:"&#128293;",sub:"Rate together",         component:HotOrNot },
-  { id:"sensation", label:"Sensation Menu",    icon:"&#127774;",sub:"Build a sequence",      component:SensationMenu },
+  { id:"sensation", label:"Sensation Menu",    icon:"&#127774;",sub:"Write the mood",        component:SensationMenu },
   { id:"poison",    label:"Pick Your Poison",  icon:"&#9879;",  sub:"Two options, choose",   component:PickYourPoison },
   { id:"dice",      label:"Dice Mode",         icon:"&#9856;",  sub:"Roll for a dare",       component:DiceMode },
   { id:"story",     label:"Story Mode",        icon:"&#128214;",sub:"A night retold",        component:StoryMode },
