@@ -231,7 +231,7 @@ function SpinWheel(){
       </div>
       <p style={s.label}>Categories</p>
       <div style={{marginBottom:20}}>
-        {CATS.map(c=>(
+        {(INTENSITY_POOL[intensity]||CATS).map(c=>(
           <span key={c} style={s.chip(sel.includes(c))} onClick={()=>toggle(c)}>{c}</span>
         ))}
       </div>
@@ -439,6 +439,76 @@ function KinkQuiz(){
 }
 
 // POSITION GUIDE
+const POS_ANIM_STYLE = `
+  @keyframes pos-breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+  @keyframes pos-bob { 0%,100%{transform:translateY(0px)} 50%{transform:translateY(-5px)} }
+  @keyframes pos-sway { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(4deg)} }
+  @keyframes pos-pulse { 0%,100%{opacity:0.65} 50%{opacity:1} }
+  .pA { transform-box:fill-box; transform-origin:center; animation:pos-breathe 2.8s ease-in-out infinite; }
+  .pB { transform-box:fill-box; transform-origin:center; animation:pos-breathe 2.8s ease-in-out 1s infinite; }
+  .pA-bob { transform-box:fill-box; transform-origin:center; animation:pos-bob 2.2s ease-in-out infinite; }
+  .pB-pulse { transform-box:fill-box; transform-origin:center; animation:pos-pulse 2.5s ease-in-out infinite; }
+  .pA-sway { transform-box:fill-box; transform-origin:center; animation:pos-sway 3s ease-in-out infinite; }
+`;
+const cA="#c9a84c", cB="#8a3555";
+function getDiagramType(pos){
+  if(["Standing","Face to Face Standing"].includes(pos.name))return"standing";
+  if(["Edge of Bed","Butterfly","The Bridge","Standing Split"].includes(pos.name))return"edge";
+  if(["Lotus","The Throne"].includes(pos.name))return"sitting";
+  if(["Cowgirl","Reverse Cowgirl","Lap Dance","The Chair"].includes(pos.name))return"ontop";
+  if(pos.who==="Behind partner")return"behind";
+  return"lying";
+}
+function PositionDiagram({position}){
+  const type=getDiagramType(position);
+  const sv={width:"100%",height:130,display:"block"};
+  const wrap={background:"#0f0609",borderRadius:4,marginBottom:16,overflow:"hidden",border:"1px solid #3d1f2e"};
+  const diagrams={
+    lying:(
+      <svg viewBox="0 0 140 90" style={sv}>
+        <g className="pB"><ellipse cx="65" cy="60" rx="32" ry="9" fill={cB} opacity="0.8"/><circle cx="98" cy="60" r="7" fill={cB} opacity="0.9"/></g>
+        <g className="pA"><ellipse cx="62" cy="44" rx="28" ry="8" fill={cA} opacity="0.8"/><circle cx="91" cy="44" r="6" fill={cA} opacity="0.9"/></g>
+      </svg>
+    ),
+    sitting:(
+      <svg viewBox="0 0 140 100" style={sv}>
+        <g className="pA-sway"><ellipse cx="43" cy="66" rx="12" ry="22" fill={cA} opacity="0.8"/><circle cx="43" cy="38" r="8" fill={cA} opacity="0.9"/></g>
+        <g className="pB-pulse"><ellipse cx="97" cy="66" rx="12" ry="22" fill={cB} opacity="0.8"/><circle cx="97" cy="38" r="8" fill={cB} opacity="0.9"/></g>
+      </svg>
+    ),
+    ontop:(
+      <svg viewBox="0 0 140 100" style={sv}>
+        <g className="pB"><ellipse cx="60" cy="76" rx="32" ry="9" fill={cB} opacity="0.8"/><circle cx="93" cy="76" r="7" fill={cB} opacity="0.9"/></g>
+        <g className="pA-bob"><ellipse cx="62" cy="52" rx="9" ry="20" fill={cA} opacity="0.8"/><circle cx="62" cy="28" r="7" fill={cA} opacity="0.9"/></g>
+      </svg>
+    ),
+    behind:(
+      <svg viewBox="0 0 140 90" style={sv}>
+        <g className="pA"><ellipse cx="55" cy="46" rx="28" ry="7" fill={cA} opacity="0.8"/><circle cx="84" cy="46" r="5" fill={cA} opacity="0.9"/></g>
+        <g className="pB"><ellipse cx="62" cy="60" rx="30" ry="8" fill={cB} opacity="0.8"/><circle cx="93" cy="60" r="6" fill={cB} opacity="0.9"/></g>
+      </svg>
+    ),
+    edge:(
+      <svg viewBox="0 0 140 100" style={sv}>
+        <g className="pB"><ellipse cx="50" cy="72" rx="32" ry="8" fill={cB} opacity="0.8"/><circle cx="18" cy="72" r="7" fill={cB} opacity="0.9"/></g>
+        <g className="pA-bob"><ellipse cx="106" cy="58" rx="8" ry="24" fill={cA} opacity="0.8"/><circle cx="106" cy="28" r="7" fill={cA} opacity="0.9"/></g>
+      </svg>
+    ),
+    standing:(
+      <svg viewBox="0 0 140 100" style={sv}>
+        <g className="pA-sway"><ellipse cx="55" cy="63" rx="8" ry="24" fill={cA} opacity="0.8"/><circle cx="55" cy="32" r="8" fill={cA} opacity="0.9"/></g>
+        <g className="pB-pulse"><ellipse cx="85" cy="63" rx="8" ry="24" fill={cB} opacity="0.8"/><circle cx="85" cy="32" r="8" fill={cB} opacity="0.9"/></g>
+      </svg>
+    ),
+  };
+  return(
+    <>
+      <style>{POS_ANIM_STYLE}</style>
+      <div style={wrap}>{diagrams[type]||diagrams.lying}</div>
+    </>
+  );
+}
+
 function PositionGuide(){
   const[filter,setFilter]=useState("All");
   const[selected,setSelected]=useState(null);
@@ -447,13 +517,13 @@ function PositionGuide(){
   if(selected)return(
     <div>
       <button style={{...s.btnO,marginBottom:16,width:"auto",padding:"8px 16px"}} onClick={()=>setSelected(null)}>Back</button>
+      <PositionDiagram position={selected}/>
       <div style={{background:C.card,border:"1px solid #3d1f2e",borderRadius:4,padding:20}}>
         <h2 style={{...s.label,fontSize:16,letterSpacing:2,marginBottom:4}}>{selected.name}</h2>
         <div style={{display:"flex",gap:8,marginBottom:16}}>
           <span style={{...s.chip(false),cursor:"default",fontSize:10}}>{selected.intensity}</span>
           <span style={{...s.chip(false),cursor:"default",fontSize:10}}>{selected.who}</span>
         </div>
-
         <p style={{lineHeight:1.8,fontSize:15,color:C.text,margin:0}}>{selected.desc}</p>
       </div>
       <button style={{...s.btnO,marginTop:12}} onClick={()=>setSelected(POSITIONS[Math.floor(Math.random()*POSITIONS.length)])}>Random Position</button>
@@ -581,7 +651,7 @@ function HotOrNot(){
   const votes=phase==="p1"?p1votes:p2votes;
   const setVotes=phase==="p1"?setP1votes:setP2votes;
   const answered=Object.keys(votes).length;
-  const vote=(item,val)=>setVotes(p=>({...p,[item]:val===p[item]?undefined:val}));
+  const vote=(item,val)=>setVotes(p=>{const n={...p};if(n[item]===val)delete n[item];else n[item]=val;return n;});
   const lockIn=()=>{
     if(phase==="p1"){setPhase("p2");return;}
     const m=HOT_OR_NOT_ITEMS.filter(i=>p1votes[i]==="hot"&&p2votes[i]==="hot");
@@ -659,58 +729,56 @@ function HotOrNot(){
 
 // SENSATION MENU
 function SensationMenu(){
-  const[phase,setPhase]=useState("p1");
-  const[p1sel,setP1sel]=useState([]);
-  const[p2sel,setP2sel]=useState([]);
-  const[matches,setMatches]=useState([]);
+  const[selected,setSelected]=useState([]);
   const[sequence,setSequence]=useState([]);
-  const cur=phase==="p1"?p1sel:p2sel;
-  const setCur=phase==="p1"?setP1sel:setP2sel;
-  const toggle=(i)=>setCur(p=>p.includes(i)?p.filter(x=>x!==i):[...p,i]);
-  const lockIn=()=>{
-    if(phase==="p1"){setPhase("p2");return;}
-    const m=p1sel.filter(i=>p2sel.includes(i));
-    setMatches(m);
-    setSequence(buildSensationSequence(m));
-    setPhase("reveal");
+  const[generated,setGenerated]=useState(false);
+  const[copied,setCopied]=useState(false);
+  const toggle=(i)=>setSelected(p=>p.includes(i)?p.filter(x=>x!==i):[...p,i]);
+  const generate=()=>{setSequence(buildSensationSequence(selected));setGenerated(true);};
+  const reset=()=>{setSelected([]);setSequence([]);setGenerated(false);setCopied(false);};
+  const copyMenu=()=>{
+    const lines=[
+      "Tonight's Sensation Menu",
+      "─────────────────────",
+      ...sequence.map((item,i)=>`${i+1}. ${item}`),
+      "",
+      "— via Apres Minuit",
+    ];
+    navigator.clipboard.writeText(lines.join("\n")).then(()=>{
+      setCopied(true);setTimeout(()=>setCopied(false),2500);
+    });
   };
-  const reset=()=>{setPhase("p1");setP1sel([]);setP2sel([]);setMatches([]);setSequence([]);};
-  if(phase==="reveal")return(
+  if(generated)return(
     <div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
-        {[["Partner 1",p1sel],["Partner 2",p2sel]].map(([label,picks])=>(
-          <div key={label} style={{background:C.card,border:"1px solid #3d1f2e",borderRadius:4,padding:12}}>
-            <p style={{...s.label,fontSize:10,marginBottom:8}}>{label}</p>
-            {picks.length?picks.map(i=><div key={i} style={{fontSize:11,color:C.text,padding:"3px 0",borderBottom:"1px solid #3d1f2e"}}>{i}</div>):<div style={{fontSize:11,color:C.muted}}>Nothing selected</div>}
-          </div>
-        ))}
-      </div>
-      <p style={{...s.label,color:C.gold}}>Tonight's Sequence</p>
-      {!matches.length?(
-        <div style={s.box}><p style={{color:C.muted,margin:0,textAlign:"center"}}>No exact matches. Pick one from each list and start there.</p></div>
-      ):(
-        <>
-          <p style={{color:C.muted,fontSize:12,marginBottom:12,letterSpacing:1}}>Work through these in order -- each one builds on the last</p>
-          {sequence.map((item,i)=>(
-            <div key={item} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #3d1f2e"}}>
-              <span style={{color:C.gold,fontSize:11,minWidth:20,letterSpacing:1}}>{i+1}</span>
-              <span style={{fontSize:14,color:C.text}}>{item}</span>
-            </div>
-          ))}
-        </>
-      )}
-      <button style={{...s.btnO,marginTop:16}} onClick={reset}>Reset</button>
+      <p style={s.label}>Tonight's Menu</p>
+      <p style={{color:C.muted,fontSize:12,marginBottom:16,letterSpacing:1}}>These build in order — work through them at your own pace</p>
+      {sequence.map((item,i)=>(
+        <div key={item} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #3d1f2e"}}>
+          <span style={{color:C.gold,fontSize:11,minWidth:20,letterSpacing:1}}>{i+1}</span>
+          <span style={{fontSize:14,color:C.text}}>{item}</span>
+        </div>
+      ))}
+      <button style={{...s.btnG,marginTop:20}} onClick={copyMenu}>
+        {copied?"Copied ✓":"Copy to Share"}
+      </button>
+      <p style={{color:C.muted,fontSize:11,textAlign:"center",marginTop:8,letterSpacing:1,lineHeight:1.6}}>
+        Paste into a text or email to send to your partner
+      </p>
+      <button style={{...s.btnO,marginTop:12}} onClick={reset}>Start Over</button>
     </div>
   );
   return(
     <div>
       <div style={{background:C.card,border:"1px solid #3d1f2e",borderRadius:4,padding:20,marginBottom:16}}>
-        <p style={{...s.label,marginBottom:4}}>{phase==="p1"?"Partner 1":"Partner 2"}</p>
-        <p style={{color:C.muted,fontSize:12,margin:"0 0 16px",letterSpacing:1}}>Select what you want tonight{phase==="p1"?" -- then hand the phone over":""}.</p>
-        <div>{SENSATION_ITEMS.map(i=><span key={i} style={s.chip(cur.includes(i))} onClick={()=>toggle(i)}>{i}</span>)}</div>
+        <p style={{...s.label,marginBottom:4}}>What are you in the mood for?</p>
+        <p style={{color:C.muted,fontSize:12,margin:"0 0 16px",letterSpacing:1}}>
+          Select everything that appeals tonight. Your partner will receive a curated sequence to follow.
+        </p>
+        <div>{SENSATION_ITEMS.map(i=><span key={i} style={s.chip(selected.includes(i))} onClick={()=>toggle(i)}>{i}</span>)}</div>
       </div>
-      <button style={{...s.btnG,opacity:!cur.length?0.4:1}} onClick={lockIn} disabled={!cur.length}>
-        {phase==="p1"?"Lock In + Pass Phone":"Reveal Sequence"}
+      <p style={{color:C.muted,fontSize:11,textAlign:"center",marginBottom:12,letterSpacing:1}}>{selected.length} selected</p>
+      <button style={{...s.btnG,opacity:!selected.length?0.4:1}} onClick={generate} disabled={!selected.length}>
+        Generate My Menu
       </button>
     </div>
   );
@@ -761,7 +829,6 @@ function DiceMode(){
   const[committed,setCommitted]=useState(false);
   const FACES=["","&#9856;","&#9857;","&#9858;","&#9859;","&#9860;","&#9861;"];
   const roll=()=>{
-    if(result&&!committed){return;}
     setRolling(true);setResult(null);setCommitted(false);
     let count=0;
     const interval=setInterval(()=>{
@@ -850,13 +917,6 @@ const EXPLICIT_TEMPLATES = {
 };
 const STORY_ACTIVITIES = ["Spin the Wheel dare -- Foreplay","Spin the Wheel dare -- Power Play","Spin the Wheel dare -- Sensory","Spin the Wheel dare -- Outdoor","Mood Matcher reveal","Wild Card draw","Hot or Not reveal","Body Map reveal","Pick Your Poison","Kink Quiz reveal","Dice Mode roll","Sensation Menu sequence","Date Night -- Romantic Warmup plan","Date Night -- All Night plan","Position Guide -- The Pretzel","Position Guide -- The Bridge","Position Guide -- Lotus","Position Guide -- The Chair"];
 
-function getStory(couple, activity) {
-  const tone = couple.tone_bias;
-  const useAwkward = Math.random() < 0.28;
-  const pool = useAwkward ? STORY_TEMPLATES.awkward : (STORY_TEMPLATES[tone] || STORY_TEMPLATES.playful);
-  const template = rnd(pool);
-  return template(couple.names[0], couple.names[1], activity);
-}
 
 function StoryMode() {
   const [story, setStory] = useState(null);
@@ -878,11 +938,12 @@ function StoryMode() {
       const useAwkward = Math.random() < 0.28;
       const pool = useAwkward ? STORY_TEMPLATES.awkward : (STORY_TEMPLATES[tone] || STORY_TEMPLATES.playful);
       const explicitPool = useAwkward ? EXPLICIT_TEMPLATES.awkward : (EXPLICIT_TEMPLATES[tone] || EXPLICIT_TEMPLATES.playful);
-      const templateIdx = Math.floor(Math.random() * Math.min(pool.length, explicitPool.length));
+      const storyIdx = Math.floor(Math.random() * pool.length);
+      const explicitIdx = Math.floor(Math.random() * explicitPool.length);
       setCouple(c);
       setActivity(a);
-      setStory(pool[templateIdx](c.names[0], c.names[1], a));
-      setExplicit(explicitPool[templateIdx](c.names[0], c.names[1], a));
+      setStory(pool[storyIdx](c.names[0], c.names[1], a));
+      setExplicit(explicitPool[explicitIdx](c.names[0], c.names[1], a));
       setLoading(false);
     }, 900);
   };
